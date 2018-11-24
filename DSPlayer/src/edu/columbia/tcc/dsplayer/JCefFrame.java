@@ -27,36 +27,37 @@ import py.edu.columbia.tcc.medidoraudiencia.core.MedidorAudienciaListener;
 import py.edu.columbia.tcc.medidoraudiencia.objects.Rostro;
 
 public class JCefFrame extends JFrame {
-//    private static final Logger logger =   Logger.getLogger("edu.tcc.logger.player");
-
     private static final Logger logger = Logger.getLogger("edu.tcc.logger.player");
     private static final long serialVersionUID = -5570653778104813836L;
+    
+    //Estos son los identificadores de gestos, reconocidos por el servidor
     private static final String RIGHT = "c8c84a5e-5180-4fdf-81aa-e0984022e0a9";
     private static final String LEFT = "eb696058-d57e-485a-929a-c6d84dfc3ad3";
     private static final String UP = "cc9ff3b2-f6b1-4d49-a138-5c662795de09";
     private static final String DOWN = "ef8e7c2b-ae8b-476d-ba49-e46579d6380e";
 
+    // Componentes de java cef para visualizar contneido web
     private CefApp cefApp_ = null;
     private CefClient client_ = null;
     private CefBrowser browser_ = null;
     private Component browerUI_ = null;
     private static JCefFrame frame = null;
 
+    // hilos 
     private static Thread player = null;
     private static Thread downloader = null;
-    private static Thread currentAudience = null;
     private static Thread ping = null;
-    private static Thread notifyAudienceDevice = null;
-    private static Thread notifyAudienceContent = null;
     private static PlayList playList = null;
     private static MedidorAudiencia medidorAudiencia;
     private static FileDownloader fileDownloader = new FileDownloader();
 
+    // paneles de dialogo, popups
     private static TranslucentDialog dialog = new TranslucentDialog();
     private static TranslucentDialog dialogEvent = new TranslucentDialog();
 
     public ContentFacade contentEJB = new ContentFacade();
 
+    // inicializa panel para visualizar contenidos con JCEF
     private JCefFrame(String startURL, boolean useOSR, boolean isTransparent) {
         CefApp.addAppHandler(new CefAppHandlerAdapter(null) {
             @Override
@@ -130,12 +131,14 @@ public class JCefFrame extends JFrame {
         });
     }
 
+    // metodo principal, para inicio del servicio
     public static void main(String[] args) {
-        playList = new PlayList(); // objeto que contiene la lista de reproducción, y se encarga de servir contenidos
-        frame = new JCefFrame(playList.getContent(), OS.isLinux(), false); // Panel visual de reproduccion
-        playList.start(); // actualiza listado de contenidos
+        playList = new PlayList(); // objeto que contiene la lista de reproducción
+        frame = new JCefFrame(playList.getContent(), OS.isLinux(), false); // Panel visual de reproduccion (aqui se ven los contneidos)
+        playList.start(); // inicia el servicio como hilo, actualiza listado de contenidos a desplegar
 
-        initMedidorAudiencia();
+        initMedidorAudiencia(); // inicia el servicio para captura de audiencia
+        new CaptureHandler(medidorAudiencia).setVisible(true); // despliega interfaz donde se visualiza la captura de audiencias 
         /**
          * Hilo encargado de la reproduccion de contenidos
          */
@@ -152,13 +155,13 @@ public class JCefFrame extends JFrame {
 
                         dialog.showDialogContent(playList.getContentName());
                         try {
-                            logger.info("\n\n!!!©>>Cantdad de audiencia actual!!!!!!" + medidorAudiencia.getAudienciaActual());
+                            logger.info("\n\n!!!>>Cantdad de audiencia actual!!!!!!" + medidorAudiencia.getAudienciaActual());
                             logger.info("Cantdad de audiencia total!!!!!!" + medidorAudiencia.getAudienciaActual());
                         } catch (Exception a) {
                             logger.error("Error al obtener cantidad de audiencia: " + a.getMessage());
                         }
 
-                        fileDownloader.registerAudienceContent(playList.getContentUUID(), medidorAudiencia.getAudienciaActual());
+//                        fileDownloader.registerAudienceContent(playList.getContentUUID(), medidorAudiencia.getAudienciaActual()); //notifica audiencia registrada al servidor
                         Thread.sleep(playList.getDuration() * 1000);
                         playList.incrementListIntex();
                     } catch (InterruptedException ex) {
@@ -180,65 +183,65 @@ public class JCefFrame extends JFrame {
         /**
          * Hilo que verifica disponibilidad de nuevos contenidos y las descarga
          */
-        downloader = new Thread() {
-            public void run() {
-                FileDownloader fd = new FileDownloader();
-                String contentUUID = null;
-                while (true) {
-                    System.err.println("Entrandoa bucle");
-                    try {
-                        Thread.sleep(5000);
-                        logger.info("Iniciando metodo");
-                        logger.info("Verificando nuevos contenidos");
-                        contentUUID = fd.verifiContent();
-                        if (contentUUID != null) {
-                            long startTime = System.currentTimeMillis();
-                            try {
-                                logger.info("Descargando contenido");
-                                fd.downloadContent(contentUUID);
-                                System.err.println("notificando confirmacion de contenido");
-                                logger.info("Confirmando descarga contenido");
-                                fd.confirmDownload(contentUUID);
-                                logger.info("Nuevo contenido confirmado");
-                                playList.updateContentList();
-                            } catch (Exception ex) {
-                                logger.info("Error al descargar contenido: " + ex.getMessage());
-                            } finally {
-                                long endTime = System.currentTimeMillis();
-                                logger.info("Duración de descarga de contenido: " + (endTime - startTime) / 1000 + " segundos");
-                            }
-                        }
-                    } catch (Exception ex) {
-                        logger.info(ex.getMessage());
-                    }
-                }
-            }
-        };
-        downloader.start();
-//        
-//
+//        downloader = new Thread() {
+//            public void run() {
+//                FileDownloader fd = new FileDownloader();
+//                String contentUUID = null;
+//                while (true) {
+//                    System.err.println("Entrandoa bucle");
+//                    try {
+//                        Thread.sleep(5000);
+//                        logger.info("Iniciando metodo");
+//                        logger.info("Verificando nuevos contenidos");
+//                        contentUUID = fd.verifiContent();
+//                        if (contentUUID != null) {
+//                            long startTime = System.currentTimeMillis();
+//                            try {
+//                                logger.info("Descargando contenido");
+//                                fd.downloadContent(contentUUID);
+//                                System.err.println("notificando confirmacion de contenido");
+//                                logger.info("Confirmando descarga contenido");
+//                                fd.confirmDownload(contentUUID);
+//                                logger.info("Nuevo contenido confirmado");
+//                                playList.updateContentList();
+//                            } catch (Exception ex) {
+//                                logger.info("Error al descargar contenido: " + ex.getMessage());
+//                            } finally {
+//                                long endTime = System.currentTimeMillis();
+//                                logger.info("Duración de descarga de contenido: " + (endTime - startTime) / 1000 + " segundos");
+//                            }
+//                        }
+//                    } catch (Exception ex) {
+//                        logger.info(ex.getMessage());
+//                    }
+//                }
+//            }
+//        };
+//        downloader.start();
+        
+
 //        /**
 //         * Hilo que hace ping al servidor
 //         */
-        ping = new Thread() {
-            public void run() {
-                while (true) {
-                    try {
-                        Thread.sleep(3000);
-                        logger.info("\n\n\n----------------------------------------");
-                        logger.info("\tHaciendo ping a servidor");
-                        fileDownloader.ping(playList.getContentUUID(), playList.getCurrentAudience());
-                        logger.info("----------------------------------------\n\n\n");
-                    } catch (Exception ex) {
-                        logger.info(ex.getMessage());
-                    }
-                }
-            }
-        };
-        ping.start();
+//        ping = new Thread() {
+//            public void run() {
+//                while (true) {
+//                    try {
+//                        Thread.sleep(3000);
+//                        logger.info("\n\n\n----------------------------------------");
+//                        logger.info("\tHaciendo ping a servidor");
+//                        fileDownloader.ping(playList.getContentUUID(), playList.getCurrentAudience());
+//                        logger.info("----------------------------------------\n\n\n");
+//                    } catch (Exception ex) {
+//                        logger.info(ex.getMessage());
+//                    }
+//                }
+//            }
+//        };
+//        ping.start();
     }
-//
 
+    // inicializa servicio para medir audiencias
     private static void initMedidorAudiencia() {
         medidorAudiencia = new MedidorAudiencia();
         medidorAudiencia.setResolucion(640, 480);
@@ -249,6 +252,7 @@ public class JCefFrame extends JFrame {
                 dialogEvent.showDialogEvent("Desplazando contenido a la izquierda...");
                 playList.decrementListIntex();
                 interruptPlayer();
+//                fileDownloader.registerAudienceEvent(playList.getContentUUID(), LEFT);
             }
 
             @Override
@@ -257,7 +261,7 @@ public class JCefFrame extends JFrame {
                 dialogEvent.showDialogEvent("Desplazando contenido a la derecha...");
                 playList.incrementListIntex();
                 interruptPlayer();
-                fileDownloader.registerAudienceEvent(playList.getContentUUID(), RIGHT);
+//                fileDownloader.registerAudienceEvent(playList.getContentUUID(), RIGHT);
             }
 
             @Override
@@ -295,6 +299,7 @@ public class JCefFrame extends JFrame {
         medidorAudiencia.start();
     }
 
+    // interrumpe el Sleep para cambio de contenido
     private static void interruptPlayer() {
         try {
             player.interrupt();

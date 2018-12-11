@@ -13,7 +13,7 @@ public class AudienceEventBean {
     private String uuidDevice;
     private String uuidContent;
     private String uuidEvent;
-    private Long deivceDate;
+    private Long deviceDate;
     private Long registrationDate;
 
     public AudienceEventBean() {
@@ -43,12 +43,12 @@ public class AudienceEventBean {
         this.uuidEvent = uuidEvent;
     }
 
-    public Long getDeivceDate() {
-        return deivceDate;
+    public Long getDeviceDate() {
+        return deviceDate;
     }
 
-    public void setDeivceDate(Long deivceDate) {
-        this.deivceDate = deivceDate;
+    public void setDeviceDate(Long deviceDate) {
+        this.deviceDate = deviceDate;
     }
 
     public Long getRegistrationDate() {

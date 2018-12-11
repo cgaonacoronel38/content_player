@@ -276,7 +276,7 @@ public class FileDownloader {
                 try {
                     logger.info("Registrando audiencia");
                     AudienceEventBean audienceEventBean = new AudienceEventBean();
-                    audienceEventBean.setDeivceDate(new Date().getTime());
+                    audienceEventBean.setDeviceDate(new Date().getTime());
                     audienceEventBean.setRegistrationDate(new Date().getTime());
                     audienceEventBean.setUuidContent(content);
                     audienceEventBean.setUuidDevice(uuidDevice);

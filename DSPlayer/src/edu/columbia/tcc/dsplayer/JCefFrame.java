@@ -244,7 +244,7 @@ public class JCefFrame extends JFrame {
     // inicializa servicio para medir audiencias
     private static void initMedidorAudiencia() {
         medidorAudiencia = new MedidorAudiencia();
-        medidorAudiencia.setResolucion(640, 480);
+        medidorAudiencia.setResolucion(800, 600);
         medidorAudiencia.setListener(new MedidorAudienciaListener() {
             @Override
             public void onGestoIzquierda() {
